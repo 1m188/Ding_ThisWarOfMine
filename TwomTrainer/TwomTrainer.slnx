@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TwomTrainer.Cli/TwomTrainer.Cli.csproj" />
+  <Project Path="TwomTrainer.Core/TwomTrainer.Core.csproj" />
+</Solution>
