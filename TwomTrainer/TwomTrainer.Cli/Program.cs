@@ -81,6 +81,7 @@ internal static partial class Program
                 }
 
                 Items[i].Toggle();
+                Sounds.Play(Items[i].Enabled);
                 Terminal.Render(UI.Render(Items));
             }
 

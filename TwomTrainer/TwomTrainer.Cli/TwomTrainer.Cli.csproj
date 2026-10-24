@@ -19,4 +19,9 @@
     <ProjectReference Include="..\TwomTrainer.Core\TwomTrainer.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 开关音效打进程序里，发布出来仍然只有一个 exe -->
+    <EmbeddedResource Include="Resources\*.wav" />
+  </ItemGroup>
+
 </Project>
