@@ -5,8 +5,11 @@ namespace TwomTrainer.Cli;
 /// <summary>全局按键：直接轮询系统按键状态，不要求控制台窗口有焦点，游戏在前台也能收到。</summary>
 public static partial class Keyboard
 {
-    /// <summary>小键盘 1；小键盘 2~8 依次加一。</summary>
+    /// <summary>小键盘 1；小键盘 2~9 依次加一。</summary>
     public const int Num1 = 0x61;
+
+    /// <summary>小键盘 9（第 9 个功能用）。</summary>
+    public const int Num9 = 0x69;
 
     private static readonly bool[] Down = new bool[256];
 

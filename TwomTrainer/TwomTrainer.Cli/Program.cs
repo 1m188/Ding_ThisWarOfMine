@@ -9,16 +9,17 @@ namespace TwomTrainer.Cli;
 
 internal static partial class Program
 {
-    private static readonly FeatureItem[] Items =
+    private static readonly IFeatureItem[] Items =
     [
-        new("无限生命", new UnlimitedLife()),
-        new("无限背包空间", new UnlimitedPackage()),
-        new("工具无限耐久度", new UnlimitedToolDurability()),
-        new("瞬间制作物品", new CreateInstantly()),
-        new("锁定白天时间", new LockDay()),
-        new("锁定晚上时间", new LockNight()),
-        new("一击必杀", new OneHitKill()),
-        new("制作不消耗资源", new NoCost()),
+        new SwitchItem("无限生命", new UnlimitedLife()),
+        new SwitchItem("无限背包空间", new UnlimitedPackage()),
+        new SwitchItem("工具无限耐久度", new UnlimitedToolDurability()),
+        new SwitchItem("瞬间制作物品", new CreateInstantly()),
+        new SwitchItem("锁定白天时间", new LockDay()),
+        new SwitchItem("锁定晚上时间", new LockNight()),
+        new SwitchItem("一击必杀", new OneHitKill()),
+        new SwitchItem("制作不消耗资源", new NoCost()),
+        new CycleItem("游戏倍速", new GameSpeed()),
     ];
 
     // 系统回调只持有函数指针，委托必须由静态字段挂住，否则会被 GC 回收。
@@ -83,8 +84,7 @@ internal static partial class Program
 
                 try
                 {
-                    Items[i].Toggle();
-                    Sounds.Play(Items[i].Enabled);
+                    Items[i].Press();
                     Terminal.Render(UI.Render(Items));
                 }
                 catch (Win32Exception)

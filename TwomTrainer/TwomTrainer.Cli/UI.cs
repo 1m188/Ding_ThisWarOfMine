@@ -7,7 +7,7 @@ namespace TwomTrainer.Cli;
 /// <summary>把当前状态拼成一整帧字符串；写到屏幕上的事交给 <see cref="Terminal"/>。</summary>
 public static class UI
 {
-    public static string Render(IReadOnlyList<FeatureItem> items)
+    public static string Render(IReadOnlyList<IFeatureItem> items)
     {
         var sb = new StringBuilder();
         sb.Append(Terminal.Cyan).Append(" 这是我的战争 修改器").Append(Terminal.Reset).Append('\n');
@@ -30,9 +30,7 @@ public static class UI
         {
             var item = items[i];
             sb.Append($" [Num{i + 1}] {item.Name}");
-            sb.Append(item.Enabled
-                ? $"{Terminal.Green}  ● 开{Terminal.Reset}"
-                : $"{Terminal.Gray}  ○ 关{Terminal.Reset}");
+            sb.Append(item.Active ? Terminal.Green : Terminal.Gray).Append($"  {item.State}").Append(Terminal.Reset);
             sb.Append('\n');
         }
 
