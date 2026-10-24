@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Threading;
 using TwomTrainer.Core;
@@ -80,9 +81,16 @@ internal static partial class Program
                     continue;
                 }
 
-                Items[i].Toggle();
-                Sounds.Play(Items[i].Enabled);
-                Terminal.Render(UI.Render(Items));
+                try
+                {
+                    Items[i].Toggle();
+                    Sounds.Play(Items[i].Enabled);
+                    Terminal.Render(UI.Render(Items));
+                }
+                catch (Win32Exception)
+                {
+                    // 游戏恰好在这一瞬间退出：下一轮循环会走「未连接」分支重新来过。
+                }
             }
 
             Thread.Sleep(40);

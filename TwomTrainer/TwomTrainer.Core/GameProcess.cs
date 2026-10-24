@@ -39,11 +39,6 @@ public static class GameProcess
     public static bool Attach()
     {
         var running = Process.GetProcessesByName(ProcessName).Where(p => !p.HasExited).ToArray();
-        foreach (var extra in running[1..])
-        {
-            extra.Dispose();
-        }
-
         if (running.Length == 0)
         {
             return false;
