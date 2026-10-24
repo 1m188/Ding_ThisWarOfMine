@@ -1,18 +1,51 @@
 namespace TwomTrainer.Core.Features;
 
-/// <summary>制作不消耗资源：跳过「把配方材料从仓库搬进工作台容器」这一步，制作、建造、升级都不再扣材料。</summary>
+/// <summary>制作不消耗资源：材料为 0 时配方也能选中、也能开始制作，并且材料不会被扣掉。制作、建造、升级同时生效。</summary>
 public sealed class NoCost : IFeature
 {
-    // 原指令 E8 1F D7 09 00 = call 0x1403E0310（搬材料），全文只此一处
-    private const int PatchRva = 0x342BEC;
+    // 顺序有意义：先放开检查、再让搬运搬 0 件、最后打开界面上的三道闸；Stop 按相反顺序恢复。
+    private static readonly Patch[] Patches =
+    [
+        // 材料检查（RVA 0x342CF0）开头直接返回「够」，统计与事件广播不再执行。
+        new(0x342CF0, [0x40, 0x57, 0x48, 0x83, 0xEC, 0x40], [0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]),
 
-    private static readonly byte[] OriginalBytes = [0xE8, 0x1F, 0xD7, 0x09, 0x00];
+        // 要搬的数量（CVTTSS2SI R9,XMM1）恒为 0：搬运调用照常执行、容器照常刷新，但一件都不搬。
+        new(0x342BE0, [0xF3, 0x4C, 0x0F, 0x2C, 0xC9], [0x45, 0x31, 0xC9, 0x90, 0x90]),
 
-    private static readonly byte[] PatchedBytes = [0x90, 0x90, 0x90, 0x90, 0x90];
+        // 打开工作台时不再禁用「制作」按钮。
+        new(0x40D9A6, [0xE8, 0x05, 0x73, 0xC8, 0xFF], [0x90, 0x90, 0x90, 0x90, 0x90]),
 
-    public int Rva => PatchRva;
+        // 选中配方时：可做数 > 0 的判定、可用字节 != 0 的判定，以及第二道禁用。
+        new(0x40CF34, [0x76, 0x0C], [0x90, 0x90]),
+        new(0x40CF3B, [0x74, 0x05], [0x90, 0x90]),
+        new(0x40CF86, [0x75, 0x1A], [0xEB, 0x1A]),
 
-    public byte[] Original => OriginalBytes;
+        // 点击「制作」时：可做数 > 0 与可用字节 != 0 两道拒绝判定。
+        new(0x40CCA0, [0x0F, 0x86, 0x63, 0x01, 0x00, 0x00], [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]),
+        new(0x40CCAB, [0x0F, 0x84, 0x58, 0x01, 0x00, 0x00], [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]),
+    ];
 
-    public byte[] Patched => PatchedBytes;
+    public int Rva => Patches[0].Rva;
+
+    public byte[] Original => Patches[0].Original;
+
+    public byte[] Patched => Patches[0].Patched;
+
+    public void Start()
+    {
+        foreach (var patch in Patches)
+        {
+            GameMemory.Write(patch.Rva, patch.Patched);
+        }
+    }
+
+    public void Stop()
+    {
+        for (var i = Patches.Length - 1; i >= 0; i--)
+        {
+            GameMemory.Write(Patches[i].Rva, Patches[i].Original);
+        }
+    }
+
+    private readonly record struct Patch(int Rva, byte[] Original, byte[] Patched);
 }
