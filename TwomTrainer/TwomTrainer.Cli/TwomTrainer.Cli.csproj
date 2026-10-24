@@ -6,6 +6,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- LibraryImport 的源码生成器需要不安全代码 -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>TwomTrainer</AssemblyName>
     <!-- NativeAOT：单文件原生二进制分发 -->
     <PublishAot>true</PublishAot>
