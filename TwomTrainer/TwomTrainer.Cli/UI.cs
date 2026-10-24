@@ -36,11 +36,6 @@ public static class UI
             sb.Append('\n');
         }
 
-        sb.Append('\n')
-            .Append(Terminal.Gray)
-            .Append(" Num1~Num8 开关功能  ·  Esc 退出（退出时会关掉所有开着的功能）")
-            .Append(Terminal.Reset);
-
         return sb.ToString();
     }
 }

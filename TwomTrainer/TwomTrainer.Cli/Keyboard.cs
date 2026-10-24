@@ -8,8 +8,6 @@ public static partial class Keyboard
     /// <summary>小键盘 1；小键盘 2~8 依次加一。</summary>
     public const int Num1 = 0x61;
 
-    public const int Escape = 0x1B;
-
     private static readonly bool[] Down = new bool[256];
 
     /// <summary>这个键这一轮是不是刚按下；按住不放只算一次。</summary>
