@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Linq;
 
 namespace TwomTrainer.Core;
 
@@ -35,20 +34,64 @@ public static class GameProcess
         }
     }
 
-    /// <summary>查找游戏进程并接管内存，成功返回 true；游戏没开返回 false。</summary>
+    /// <summary>查找游戏进程并接管内存，成功返回 true；游戏没开或读不到（权限不足、刚好退出）返回 false。</summary>
     public static bool Attach()
     {
-        var running = Process.GetProcessesByName(ProcessName).Where(p => !p.HasExited).ToArray();
-        if (running.Length == 0)
+        Process[] running;
+        try
+        {
+            running = Process.GetProcessesByName(ProcessName);
+        }
+        catch (Exception)
         {
             return false;
         }
 
-        _process = running[0];
-        Handle = _process.Handle;
-        BaseAddress = _process.MainModule!.BaseAddress.ToInt64();
-        Pid = _process.Id;
-        return true;
+        Process? target = null;
+
+        // 第一个读得到的进程对象留作目标，其余的全部立刻释放（不然它们的句柄要等 GC 才收）。
+        foreach (var process in running)
+        {
+            if (target is null)
+            {
+                try
+                {
+                    if (!process.HasExited)
+                    {
+                        target = process;
+                        continue;
+                    }
+                }
+                catch (Exception)
+                {
+                    // 看不了状态的进程（权限不足、刚好退出）当作没找到。
+                }
+            }
+
+            process.Dispose();
+        }
+
+        if (target is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            Handle = target.Handle;
+            BaseAddress = target.MainModule!.BaseAddress.ToInt64();
+            Pid = target.Id;
+            _process = target;
+            return true;
+        }
+        catch (Exception)
+        {
+            target.Dispose();
+            Handle = IntPtr.Zero;
+            BaseAddress = 0;
+            Pid = 0;
+            return false;
+        }
     }
 
     /// <summary>放开当前进程（不会结束游戏）。</summary>
