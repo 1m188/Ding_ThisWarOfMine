@@ -32,11 +32,23 @@ public static partial class Terminal
         Console.Write("\x1b[?25l\x1b[2J");
     }
 
-    /// <summary>把一整帧写到屏幕上：光标回左上角，写完后清掉下面残留的旧内容。</summary>
+    /// <summary>把一整帧原地写到屏幕上：光标归位，逐行覆盖并擦掉行尾，最后清掉多余的旧行。</summary>
     public static void Render(string frame)
     {
         Frame.Clear();
-        Frame.Append("\x1b[H").Append(frame).Append("\x1b[0J");
+        Frame.Append("\x1b[H"); // 光标归位
+
+        var start = 0;
+        for (var i = 0; i < frame.Length; i++)
+        {
+            if (frame[i] != '\n') continue;
+
+            Frame.Append(frame, start, i - start) // 添加行内容
+                 .Append("\x1b[K\n");             // 擦掉行尾
+            start = i + 1;
+        }
+
+        Frame.Append(frame, start, frame.Length - start).Append("\x1b[K\x1b[0J");
         Console.Write(Frame);
     }
 
