@@ -4,9 +4,10 @@ using System.Runtime.InteropServices;
 
 namespace TwomTrainer.Core;
 
-/// <summary>按「模块基址 + RVA」读写目标进程内存，代码页会自动改成可写再改回。</summary>
+/// <summary>按「模块基址 + RVA」读写目标进程内存，写入前临时放开写权限、写完还原。</summary>
 public static partial class GameMemory
 {
+    private const uint PageReadWrite = 0x04;
     private const uint PageExecuteReadWrite = 0x40;
 
     /// <summary>读 RVA 处的 length 个字节。</summary>
@@ -23,14 +24,19 @@ public static partial class GameMemory
         return buffer;
     }
 
-    /// <summary>把 bytes 写到 RVA 处。游戏代码段是只读的，这里临时放开写权限再还原。</summary>
-    public static void Write(int rva, ReadOnlySpan<byte> bytes)
+    /// <summary>改游戏代码段用：临时放开「可读写 + 可执行」再写。</summary>
+    public static void Write(int rva, ReadOnlySpan<byte> bytes) => Write(rva, bytes, PageExecuteReadWrite);
+
+    /// <summary>改数据段（旗标、数值）用：只需要可读写，不必放开可执行。</summary>
+    public static void WriteData(int rva, ReadOnlySpan<byte> bytes) => Write(rva, bytes, PageReadWrite);
+
+    private static void Write(int rva, ReadOnlySpan<byte> bytes, uint protection)
     {
         var address = new IntPtr(GameProcess.BaseAddress + rva);
         var buffer = bytes.ToArray();
         var size = (nuint)buffer.Length;
 
-        if (!VirtualProtectEx(GameProcess.Handle, address, size, PageExecuteReadWrite, out var oldProtect))
+        if (!VirtualProtectEx(GameProcess.Handle, address, size, protection, out var oldProtect))
         {
             throw new Win32Exception(Marshal.GetLastWin32Error());
         }
