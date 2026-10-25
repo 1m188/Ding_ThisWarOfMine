@@ -13,23 +13,44 @@ public sealed class SwitchItem(string name, IFeature feature) : IFeatureItem
 
     public string State => Active ? "● 开" : "○ 关";
 
+    public string? Notice { get; private set; }
+
     public void Press()
     {
         if (Active)
         {
-            Feature.Stop();
-            Active = false;
+            // 只有真的全部恢复成原始字节才把状态改成「关」，否则保持原样并在这一行后面提示原因。
+            if (Feature.Stop())
+            {
+                Active = false;
+                Notice = null;
+                Sounds.Play(false);
+            }
+            else
+            {
+                Notice = "关闭失败：这处字节已被别的程序改过";
+            }
+
+            return;
+        }
+
+        if (Feature.Start())
+        {
+            Active = true;
+            Notice = null;
+            Sounds.Play(true);
         }
         else
         {
-            Feature.Start();
-            Active = true;
+            Notice = "开启失败：字节不符或读写出错";
         }
-
-        Sounds.Play(Active);
     }
 
-    public void Reset() => Active = false;
+    public void Reset()
+    {
+        Active = false;
+        Notice = null;
+    }
 
     public void Disable()
     {
@@ -40,5 +61,6 @@ public sealed class SwitchItem(string name, IFeature feature) : IFeatureItem
 
         Feature.Stop();
         Active = false;
+        Notice = null;
     }
 }

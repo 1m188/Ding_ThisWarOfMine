@@ -13,16 +13,24 @@ public sealed class CycleItem(string name, GameSpeed feature) : IFeatureItem
 
     public string State => $"×{feature.Level}";
 
+    public string? Notice { get; private set; }
+
     public void Press()
     {
-        feature.Start();
-        Sounds.Play(Active);
+        // 档位没变（例如时间系统还没初始化）就提示一下，不响声，界面上的档位也就不会变。
+        if (feature.Start())
+        {
+            Notice = null;
+            Sounds.Play(Active);
+        }
+        else
+        {
+            Notice = "档位切换失败";
+        }
     }
 
-    // 档位记在 GameSpeed 里（它还按 PID 判断是不是同一次游戏），这里不用清。
-    public void Reset()
-    {
-    }
+    // 这里只清提示。
+    public void Reset() => Notice = null;
 
     public void Disable() => feature.Stop();
 }

@@ -10,6 +10,7 @@ public static partial class Terminal
     public const string Reset = "\x1b[0m";
     public const string Cyan = "\x1b[36m";
     public const string Green = "\x1b[32m";
+    public const string Red = "\x1b[91m";
     public const string Gray = "\x1b[90m";
 
     private const int StdOutputHandle = -11;

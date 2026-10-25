@@ -31,6 +31,12 @@ public static class UI
             var item = items[i];
             sb.Append($" [Num{i + 1}] {item.Name}");
             sb.Append(item.Active ? Terminal.Green : Terminal.Gray).Append($"  {item.State}").Append(Terminal.Reset);
+
+            if (item.Notice is { } notice)
+            {
+                sb.Append(Terminal.Red).Append("  ").Append(notice).Append(Terminal.Reset);
+            }
+
             sb.Append('\n');
         }
 

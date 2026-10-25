@@ -17,6 +17,9 @@ public interface IFeatureItem
     /// <summary>状态文字。</summary>
     public string State { get; }
 
+    /// <summary>最近一次操作失败的提示，成功时清空；null 表示没有提示。</summary>
+    public string? Notice { get; }
+
     /// <summary>按下对应按键时调用：改内存、放声音、更新状态等。</summary>
     public void Press();
 
