@@ -4,15 +4,7 @@ namespace TwomTrainer.Core.Features;
 public sealed class OneHitKill : IFeature
 {
     // 原指令 74 06 = je 0x33E2CF（标记为 0 时跳过必杀）
-    private const int PatchRva = 0x33E2C7;
+    private static readonly Patch[] PatchList = [new(0x33E2C7, [0x74, 0x06], [0x90, 0x90])];
 
-    private static readonly byte[] OriginalBytes = [0x74, 0x06];
-
-    private static readonly byte[] PatchedBytes = [0x90, 0x90];
-
-    public int Rva => PatchRva;
-
-    public byte[] Original => OriginalBytes;
-
-    public byte[] Patched => PatchedBytes;
+    public Patch[] Patches => PatchList;
 }

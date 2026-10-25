@@ -3,8 +3,8 @@ namespace TwomTrainer.Core.Features;
 /// <summary>制作不消耗资源：材料为 0 时配方也能选中、也能开始制作，并且材料不会被扣掉。制作、建造、升级同时生效。</summary>
 public sealed class NoCost : IFeature
 {
-    // 顺序有意义：先放开检查、再让搬运搬 0 件、最后打开界面上的三道闸；Stop 按相反顺序恢复。
-    private static readonly Patch[] Patches =
+    // 顺序有意义：先放开检查、再让搬运搬 0 件、最后打开界面上的三道闸；关闭时按相反顺序恢复。
+    private static readonly Patch[] PatchList =
     [
         // 材料检查（RVA 0x342CF0）开头直接返回「够」，统计与事件广播不再执行。
         new(0x342CF0, [0x40, 0x57, 0x48, 0x83, 0xEC, 0x40], [0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]),
@@ -25,27 +25,5 @@ public sealed class NoCost : IFeature
         new(0x40CCAB, [0x0F, 0x84, 0x58, 0x01, 0x00, 0x00], [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]),
     ];
 
-    public int Rva => Patches[0].Rva;
-
-    public byte[] Original => Patches[0].Original;
-
-    public byte[] Patched => Patches[0].Patched;
-
-    public void Start()
-    {
-        foreach (var patch in Patches)
-        {
-            GameMemory.Write(patch.Rva, patch.Patched);
-        }
-    }
-
-    public void Stop()
-    {
-        for (var i = Patches.Length - 1; i >= 0; i--)
-        {
-            GameMemory.Write(Patches[i].Rva, Patches[i].Original);
-        }
-    }
-
-    private readonly record struct Patch(int Rva, byte[] Original, byte[] Patched);
+    public Patch[] Patches => PatchList;
 }

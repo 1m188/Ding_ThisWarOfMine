@@ -3,8 +3,10 @@ using System;
 namespace TwomTrainer.Core.Features;
 
 /// <summary>游戏倍速：每次 Start 升一档（1→2→…→8→1），Stop 回到 1 档并写回原值。</summary>
+/// <remarks>倍速的字节在运行时按档位算，不走补丁表，所以直接重写 Start/Stop。</remarks>
 public sealed class GameSpeed : IFeature
 {
+    private const int PatchRva = 0x823FB8;
     private const int MaxLevel = 8;
 
     /// <summary>原值是从哪个进程读的；换了进程要重新读。</summary>
@@ -13,9 +15,10 @@ public sealed class GameSpeed : IFeature
     private int _level = 1;
     private byte[]? _original;
 
-    public int Rva => 0x823FB8;
+    /// <summary>当前档位，1 表示原始速度。</summary>
+    public int Level => _pid == GameProcess.Pid ? _level : 1;
 
-    public byte[] Original
+    private byte[] Original
     {
         get
         {
@@ -25,17 +28,11 @@ public sealed class GameSpeed : IFeature
                 _level = 1;
             }
 
-            _original ??= GameMemory.Read(Rva, sizeof(double));
+            _original ??= GameMemory.Read(PatchRva, sizeof(double));
             _pid = GameProcess.Pid;
             return _original;
         }
     }
-
-    /// <summary>下一档的字节（接口要求公开；实际写入在 <see cref="Start"/> 里算）。</summary>
-    public byte[] Patched => BitConverter.GetBytes(BitConverter.ToDouble(Original) / (_level == MaxLevel ? 1 : _level + 1));
-
-    /// <summary>当前档位，1 表示原始速度。</summary>
-    public int Level => _pid == GameProcess.Pid ? _level : 1;
 
     public void Start()
     {
@@ -47,7 +44,7 @@ public sealed class GameSpeed : IFeature
         }
 
         _level = _level == MaxLevel ? 1 : _level + 1;
-        GameMemory.Write(Rva, Bytes(original, _level));
+        GameMemory.Write(PatchRva, Bytes(original, _level));
     }
 
     public void Stop()
@@ -56,7 +53,7 @@ public sealed class GameSpeed : IFeature
         _level = 1;
         if (original is >= 1000 and <= 1e10)
         {
-            GameMemory.Write(Rva, Bytes(original, 1));
+            GameMemory.Write(PatchRva, Bytes(original, 1));
         }
     }
 
