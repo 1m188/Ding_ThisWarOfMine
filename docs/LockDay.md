@@ -89,6 +89,8 @@ void SetClockProgress(ClockState *s, float progress) {
 
 ## 可选的功能实现方法
 
+**本项目当前实现**：方案一，补丁在 RVA `0x3F5724`（8 字节改写：把"写入新进度"改成"读回旧进度"）。
+
 ### 方案一：让"写入新进度"失效（推荐）
 
 被改写的位置在 `SetClockProgress` 开头的第二条指令，RVA `0x3F5724`，一共 8 个字节：
