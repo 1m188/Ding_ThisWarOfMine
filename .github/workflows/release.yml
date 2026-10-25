@@ -1,0 +1,61 @@
+# 发布 Release 后触发：构建修改器，并把两个修改器附加到该 Release。
+name: 构建并发布
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ github.event.release.tag_name }}
+
+      - name: 安装 .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: 发布修改器
+        shell: pwsh
+        run: publish.ps1
+
+      - name: 准备发布文件
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $trainer = 'TwomTrainer/TwomTrainer.Cli/bin/Release/net10.0/win-x64/publish/TwomTrainer.exe'
+          $fling = 'This War of Mine v6.0.0 Plus 8 Trainer.exe'
+
+          if (-not (Test-Path $trainer)) { throw "找不到构建产物：$trainer" }
+          if (-not (Test-Path $fling)) { throw "找不到风灵月影修改器：$fling" }
+
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item $trainer 'release/TwomTrainer.exe'
+          Copy-Item $fling 'release/This War of Mine v6.0.0 Plus 8 Trainer.exe'
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: TwomTrainer-win-x64
+          path: release/TwomTrainer.exe
+          if-no-files-found: error
+          overwrite: true
+
+      - name: 上传到 Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          gh release upload "$env:RELEASE_TAG" "release/TwomTrainer.exe" "release/This War of Mine v6.0.0 Plus 8 Trainer.exe" --clobber
