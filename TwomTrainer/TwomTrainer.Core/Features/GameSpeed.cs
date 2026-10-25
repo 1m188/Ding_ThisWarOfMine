@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 
 namespace TwomTrainer.Core.Features;
 
@@ -34,26 +35,45 @@ public sealed class GameSpeed : IFeature
         }
     }
 
-    public void Start()
+    public bool Start()
     {
-        var original = BitConverter.ToDouble(Original);
-        if (original is < 1000 or > 1e10)
+        try
         {
-            // 时间系统还没初始化，这次不写，档位也不动。
-            return;
-        }
+            var original = BitConverter.ToDouble(Original);
+            if (original is < 1000 or > 1e10)
+            {
+                // 时间系统还没初始化，这次不写，档位也不动。
+                return false;
+            }
 
-        _level = _level == MaxLevel ? 1 : _level + 1;
-        GameMemory.Write(PatchRva, Bytes(original, _level));
+            var level = _level == MaxLevel ? 1 : _level + 1;
+            GameMemory.Write(PatchRva, Bytes(original, level));
+            _level = level;
+            return true;
+        }
+        catch (Win32Exception)
+        {
+            return false;
+        }
     }
 
-    public void Stop()
+    public bool Stop()
     {
-        var original = BitConverter.ToDouble(Original);
-        _level = 1;
-        if (original is >= 1000 and <= 1e10)
+        try
         {
-            GameMemory.Write(PatchRva, Bytes(original, 1));
+            var original = BitConverter.ToDouble(Original);
+            _level = 1;
+
+            if (original is >= 1000 and <= 1e10)
+            {
+                GameMemory.Write(PatchRva, Bytes(original, 1));
+            }
+
+            return true;
+        }
+        catch (Win32Exception)
+        {
+            return false;
         }
     }
 
