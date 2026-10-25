@@ -118,7 +118,14 @@ internal static partial class Program
         {
             foreach (var item in Items)
             {
-                item.Disable();
+                try
+                {
+                    item.Disable();
+                }
+                catch (Exception)
+                {
+                    // 游戏可能正好在退出：这一项写不进去就跳过，别影响其它项和后续清理。
+                }
             }
         }
 
