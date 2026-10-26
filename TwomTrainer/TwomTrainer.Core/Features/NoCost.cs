@@ -1,9 +1,9 @@
 namespace TwomTrainer.Core.Features;
 
-/// <summary>制作不消耗资源：材料为 0 时配方也能选中、也能开始制作，并且材料不会被扣掉。制作、建造、升级同时生效。</summary>
+/// <summary>制作不消耗资源：材料为 0 时配方也能选中、也能开始制作，并且材料不会被扣掉；制作数量也不再受材料上限限制。制作、建造、升级同时生效。</summary>
 public sealed class NoCost : IFeature
 {
-    // 顺序有意义：先放开检查、再让搬运搬 0 件、最后打开界面上的三道闸；关闭时按相反顺序恢复。
+    // 顺序有意义：先放开检查、再让搬运搬 0 件，最后放开界面上的按钮与加号限制；关闭时按相反顺序恢复。
     private static readonly Patch[] PatchList =
     [
         // 材料检查（RVA 0x342CF0）开头直接返回「够」，统计与事件广播不再执行。
@@ -23,6 +23,12 @@ public sealed class NoCost : IFeature
         // 点击「制作」时：可做数 > 0 与可用字节 != 0 两道拒绝判定。
         new(0x40CCA0, [0x0F, 0x86, 0x63, 0x01, 0x00, 0x00], [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]),
         new(0x40CCAB, [0x0F, 0x84, 0x58, 0x01, 0x00, 0x00], [0x90, 0x90, 0x90, 0x90, 0x90, 0x90]),
+
+        // 加号点击：去掉“当前数量 < 材料上限”的比较，数量可以继续增加。
+        new(0x40D325, [0x73, 0x48], [0x90, 0x90]),
+
+        // 加号按钮：始终可点；否则数量一旦到达材料上限，按钮仍会被禁用。
+        new(0x40E201, [0x0F, 0x92, 0xC2], [0xB2, 0x01, 0x90]),
     ];
 
     public Patch[] Patches => PatchList;
